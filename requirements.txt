@@ -1,0 +1,13 @@
+# Core LangChain + AWS Bedrock
+langchain[aws]
+langchain-core
+langchain-aws
+
+# LangGraph workflow engine
+langgraph
+
+# HTTP client
+requests
+
+# Environment variable management
+python-dotenv
