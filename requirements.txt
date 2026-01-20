@@ -11,3 +11,6 @@ requests
 
 # Environment variable management
 python-dotenv
+
+# Library for MCP setup
+mcp
