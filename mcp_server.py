@@ -70,6 +70,10 @@ async def call_tool(name: str, arguments: dict):
                 text=response.text
             )]
         
+async def main():
+    from mcp.server.stdio import stdio_server
+    async with stdio_server() as (read_stream, write_stream):
+        await app.run(read_stream, write_stream, app.create_initialization_options())
+
 if __name__ == "__main__":
-    import mcp.server.stdio
-    mcp.server.stdio.run_server(app)
+    asyncio.run(main())
