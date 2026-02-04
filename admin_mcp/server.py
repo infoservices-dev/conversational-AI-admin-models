@@ -16,6 +16,8 @@ from tools import (
     onboard_logging_config,
     get_logging_configs,
     delete_logging_config,
+    get_sync_status,
+    validate_sync,
     get_firing_alerts,
     get_datasources,
     create_alert,
@@ -23,6 +25,11 @@ from tools import (
     update_alert,
     delete_alert,
     get_specific_alert,
+    get_metrics_catalog,
+    get_dashboards,
+    get_alertmanager_groups,
+    get_contact_points,
+    get_silences,
     get_metrics_namespaces,
     get_metrics_metadata,
 )
@@ -117,6 +124,30 @@ TOOLS: dict[str, dict[str, Any]] = {
             "required": ["client_id", "aws_account_id", "source", "log_selector"]
         }
     },
+    "get_sync_status": {
+        "function": get_sync_status,
+        "description": "Get logging sync status for a client and AWS account. Use when checking if logs are syncing properly.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "client_id": {"type": "string", "description": "The client identifier"},
+                "aws_account_id": {"type": "string", "description": "AWS account ID"}
+            },
+            "required": ["client_id", "aws_account_id"]
+        }
+    },
+    "validate_sync": {
+        "function": validate_sync,
+        "description": "Validate logging configuration sync for a client and AWS account. Use when verifying log sync configuration.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "client_id": {"type": "string", "description": "The client identifier"},
+                "aws_account_id": {"type": "string", "description": "AWS account ID"}
+            },
+            "required": ["client_id", "aws_account_id"]
+        }
+    },
     "get_firing_alerts": {
         "function": get_firing_alerts,
         "description": "Fetch all currently firing alerts from Grafana dashboard. Use when asking about current or active alerts.",
@@ -128,6 +159,46 @@ TOOLS: dict[str, dict[str, Any]] = {
     "get_datasources": {
         "function": get_datasources,
         "description": "Fetch all Grafana data sources (Prometheus, Loki, etc.) configured in the workspace. Use when asking about available data sources.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    "get_metrics_catalog": {
+        "function": get_metrics_catalog,
+        "description": "Discover available metrics from Prometheus via Grafana. Use when exploring what metrics are available.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    "get_dashboards": {
+        "function": get_dashboards,
+        "description": "Get all Grafana dashboards. Use when listing or discovering dashboards.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    "get_alertmanager_groups": {
+        "function": get_alertmanager_groups,
+        "description": "Get grouped alerts from Alertmanager. Use when viewing alerts organized by groups.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    "get_contact_points": {
+        "function": get_contact_points,
+        "description": "Get Alertmanager contact points (receivers/notification channels). Use when listing where alerts are sent.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    "get_silences": {
+        "function": get_silences,
+        "description": "Get all silences from Alertmanager. Use when checking which alerts are currently silenced.",
         "inputSchema": {
             "type": "object",
             "properties": {}
@@ -269,7 +340,7 @@ session_manager = SessionManager()
 
 async def handle_initialize(params: dict[str, Any] | None) -> dict[str, Any]:
     return {
-        "protocolVersion": "2026-02-02",
+        "protocolVersion": "2024-11-05",
         "capabilities": {
             "tools": {"listChanged": True},
             "resources": {"subscribe": False, "listChanged": False},

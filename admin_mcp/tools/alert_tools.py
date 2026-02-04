@@ -115,3 +115,33 @@ async def get_specific_alert(alert_id: str) -> dict[str, Any]:
         method="GET",
         endpoint=f"/api/v1/alerts/specific_alerts/{alert_id}"
     )
+
+async def get_metrics_catalog() -> dict[str, Any]:
+    return await make_request(
+        method="GET",
+        endpoint="/api/v1/alerts/metrics/catalog"
+    )
+
+async def get_dashboards() -> dict[str, Any]:
+    return await make_request(
+        method="GET",
+        endpoint="/api/v1/alerts/dashboards"
+    )
+
+async def get_alertmanager_groups() -> dict[str, Any]:
+    return await make_request(
+        method="GET",
+        endpoint="/api/v1/alerts/alertmanager/groups"
+    )
+
+async def get_contact_points() -> dict[str, Any]:
+    return await make_request(
+        method="GET",
+        endpoint="/api/v1/alerts/alertmanager/contact-points"
+    )
+
+async def get_silences() -> dict[str, Any]:
+    return await make_request(
+        method="GET",
+        endpoint="/api/v1/alerts/alertmanager/silences"
+    )

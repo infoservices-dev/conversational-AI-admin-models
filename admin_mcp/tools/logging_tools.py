@@ -46,3 +46,15 @@ async def delete_logging_config(
             "log_selector": log_selector
         }
     )
+
+async def get_sync_status(client_id: str, aws_account_id: str) -> dict[str, Any]:
+    return await make_request(
+        method="GET",
+        endpoint=f"/api/v1/logging/sync-status/{client_id}/awsid-{aws_account_id}"
+    )
+
+async def validate_sync(client_id: str, aws_account_id: str) -> dict[str, Any]:
+    return await make_request(
+        method="GET",
+        endpoint=f"/api/v1/logging/validate-sync/{client_id}/awsid-{aws_account_id}"
+    )
