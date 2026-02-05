@@ -41,6 +41,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+PROTOCOL_VERSION = "2024-11-05"
 
 def extract_bearer_token(request: Request) -> str | None:
     auth_header = request.headers.get("Authorization", "")
@@ -72,7 +73,7 @@ class ToolDefinition(BaseModel):
 class ServerInfo(BaseModel):
     name: str = settings.server_name
     version: str = settings.server_version
-    protocolVersion: str = "2024-11-05"
+    protocolVersion: str = PROTOCOL_VERSION
 
 
 TOOLS: dict[str, dict[str, Any]] = {
@@ -340,7 +341,7 @@ session_manager = SessionManager()
 
 async def handle_initialize(params: dict[str, Any] | None) -> dict[str, Any]:
     return {
-        "protocolVersion": "2024-11-05",
+        "protocolVersion": PROTOCOL_VERSION,
         "capabilities": {
             "tools": {"listChanged": True},
             "resources": {"subscribe": False, "listChanged": False},
@@ -450,7 +451,7 @@ async def server_info():
     return {
         "name": settings.server_name,
         "version": settings.server_version,
-        "protocolVersion": "2024-11-05",
+        "protocolVersion": PROTOCOL_VERSION,
         "tools_count": len(TOOLS),
         "tools": list(TOOLS.keys())
     }
@@ -514,7 +515,7 @@ async def mcp_sse_endpoint(request: Request):
             "data": json.dumps({
                 "name": settings.server_name,
                 "version": settings.server_version,
-                "protocolVersion": "2024-11-05"
+                "protocolVersion": PROTOCOL_VERSION
             })
         }
         
@@ -645,7 +646,7 @@ async def call_tool_api(tool_name: str, request: Request):
     
     try:
         body = await request.json()
-    except:
+    except json.JSONDecodeError:
         body = {}
     
     tool_func = TOOLS[tool_name]["function"]
