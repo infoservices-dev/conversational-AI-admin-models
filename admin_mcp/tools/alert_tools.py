@@ -131,6 +131,9 @@ async def update_alert(
 async def delete_alert(alert_uid: str) -> dict[str, Any]:
     """Delete an alert rule.
     
+    Args:
+        alert_uid: The unique identifier of the alert to delete.
+
     Returns:
         dict containing the deletion response.
     """
@@ -143,6 +146,9 @@ async def delete_alert(alert_uid: str) -> dict[str, Any]:
 async def get_specific_alert(alert_id: str) -> dict[str, Any]:
     """Get alert corresponding to a specific alert id.
     
+    Args:
+        alert_id: The alert ID to retrieve.
+
     Returns:
         dict containing that specific alert
     """
@@ -150,6 +156,7 @@ async def get_specific_alert(alert_id: str) -> dict[str, Any]:
         method="GET",
         endpoint=f"/api/v1/alerts/specific_alerts/{alert_id}"
     )
+
 
 async def get_metrics_catalog() -> dict[str, Any]:
     """Discover available metrics from Prometheus via Grafana.
@@ -162,6 +169,7 @@ async def get_metrics_catalog() -> dict[str, Any]:
         endpoint="/api/v1/alerts/metrics/catalog"
     )
 
+
 async def get_dashboards() -> dict[str, Any]:
     """Get all Grafana dashboards.
     
@@ -172,6 +180,7 @@ async def get_dashboards() -> dict[str, Any]:
         method="GET",
         endpoint="/api/v1/alerts/dashboards"
     )
+
 
 async def get_alertmanager_groups() -> dict[str, Any]:
     """Get grouped alerts from Alertmanager.
@@ -184,6 +193,7 @@ async def get_alertmanager_groups() -> dict[str, Any]:
         endpoint="/api/v1/alerts/alertmanager/groups"
     )
 
+
 async def get_contact_points() -> dict[str, Any]:
     """Get Alertmanager contact points (notification channels).
     
@@ -194,6 +204,7 @@ async def get_contact_points() -> dict[str, Any]:
         method="GET",
         endpoint="/api/v1/alerts/alertmanager/contact-points"
     )
+
 
 async def get_silences() -> dict[str, Any]:
     """Get all silences from Alertmanager.
