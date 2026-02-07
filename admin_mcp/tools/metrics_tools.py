@@ -7,6 +7,11 @@ async def get_metrics_namespaces(
     region: str,
     timerange: str
 ) -> dict[str, Any]:
+    """Get metrics namespaces for an AWS account.
+    
+    Returns:
+        dict containing available metrics namespaces.
+    """
     return await make_request(
         method="GET",
         endpoint="/metrics-namespaces",
@@ -24,6 +29,11 @@ async def get_metrics_metadata(
     timerange: str,
     service: str
 ) -> dict[str, Any]:
+    """Get metrics metadata for a specific AWS service.
+    
+    Returns:
+        dict containing metrics metadata for the service.
+    """
     return await make_request(
         method="GET",
         endpoint="/metrics-metadata",

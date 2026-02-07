@@ -16,6 +16,8 @@ from tools import (
     onboard_logging_config,
     get_logging_configs,
     delete_logging_config,
+    get_sync_status,
+    validate_sync,
     get_firing_alerts,
     get_datasources,
     create_alert,
@@ -23,6 +25,11 @@ from tools import (
     update_alert,
     delete_alert,
     get_specific_alert,
+    get_metrics_catalog,
+    get_dashboards,
+    get_alertmanager_groups,
+    get_contact_points,
+    get_silences,
     get_metrics_namespaces,
     get_metrics_metadata,
 )
@@ -34,6 +41,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+PROTOCOL_VERSION = "2024-11-05"
 
 def extract_bearer_token(request: Request) -> str | None:
     auth_header = request.headers.get("Authorization", "")
@@ -65,7 +73,7 @@ class ToolDefinition(BaseModel):
 class ServerInfo(BaseModel):
     name: str = settings.server_name
     version: str = settings.server_version
-    protocolVersion: str = "2024-11-05"
+    protocolVersion: str = PROTOCOL_VERSION
 
 
 TOOLS: dict[str, dict[str, Any]] = {
@@ -117,6 +125,30 @@ TOOLS: dict[str, dict[str, Any]] = {
             "required": ["client_id", "aws_account_id", "source", "log_selector"]
         }
     },
+    "get_sync_status": {
+        "function": get_sync_status,
+        "description": "Get logging sync status for a client and AWS account. Use when checking if logs are syncing properly.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "client_id": {"type": "string", "description": "The client identifier"},
+                "aws_account_id": {"type": "string", "description": "AWS account ID"}
+            },
+            "required": ["client_id", "aws_account_id"]
+        }
+    },
+    "validate_sync": {
+        "function": validate_sync,
+        "description": "Validate logging configuration sync for a client and AWS account. Use when verifying log sync configuration.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "client_id": {"type": "string", "description": "The client identifier"},
+                "aws_account_id": {"type": "string", "description": "AWS account ID"}
+            },
+            "required": ["client_id", "aws_account_id"]
+        }
+    },
     "get_firing_alerts": {
         "function": get_firing_alerts,
         "description": "Fetch all currently firing alerts from Grafana dashboard. Use when asking about current or active alerts.",
@@ -128,6 +160,46 @@ TOOLS: dict[str, dict[str, Any]] = {
     "get_datasources": {
         "function": get_datasources,
         "description": "Fetch all Grafana data sources (Prometheus, Loki, etc.) configured in the workspace. Use when asking about available data sources.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    "get_metrics_catalog": {
+        "function": get_metrics_catalog,
+        "description": "Discover available metrics from Prometheus via Grafana. Use when exploring what metrics are available.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    "get_dashboards": {
+        "function": get_dashboards,
+        "description": "Get all Grafana dashboards. Use when listing or discovering dashboards.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    "get_alertmanager_groups": {
+        "function": get_alertmanager_groups,
+        "description": "Get grouped alerts from Alertmanager. Use when viewing alerts organized by groups.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    "get_contact_points": {
+        "function": get_contact_points,
+        "description": "Get Alertmanager contact points (receivers/notification channels). Use when listing where alerts are sent.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    "get_silences": {
+        "function": get_silences,
+        "description": "Get all silences from Alertmanager. Use when checking which alerts are currently silenced.",
         "inputSchema": {
             "type": "object",
             "properties": {}
@@ -269,7 +341,7 @@ session_manager = SessionManager()
 
 async def handle_initialize(params: dict[str, Any] | None) -> dict[str, Any]:
     return {
-        "protocolVersion": "2026-02-02",
+        "protocolVersion": PROTOCOL_VERSION,
         "capabilities": {
             "tools": {"listChanged": True},
             "resources": {"subscribe": False, "listChanged": False},
@@ -379,7 +451,7 @@ async def server_info():
     return {
         "name": settings.server_name,
         "version": settings.server_version,
-        "protocolVersion": "2024-11-05",
+        "protocolVersion": PROTOCOL_VERSION,
         "tools_count": len(TOOLS),
         "tools": list(TOOLS.keys())
     }
@@ -443,7 +515,7 @@ async def mcp_sse_endpoint(request: Request):
             "data": json.dumps({
                 "name": settings.server_name,
                 "version": settings.server_version,
-                "protocolVersion": "2024-11-05"
+                "protocolVersion": PROTOCOL_VERSION
             })
         }
         
@@ -574,7 +646,7 @@ async def call_tool_api(tool_name: str, request: Request):
     
     try:
         body = await request.json()
-    except:
+    except json.JSONDecodeError:
         body = {}
     
     tool_func = TOOLS[tool_name]["function"]
