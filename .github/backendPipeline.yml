@@ -1,0 +1,87 @@
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches:
+      #-   metrics-logs-alerts-genai # <-- your feature branch
+      -   ai-assistant-integration
+
+env:
+  ACTIONS_STEP_DEBUG: true
+  AWS_REGION: us-east-1
+  KUBE_NAMESPACE: default  # or your namespace
+  ECR_REPOSITORY: 339713066436.dkr.ecr.us-east-1.amazonaws.com/mcp-server
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+
+    steps:
+      #########################################################################
+      # 1. Checkout
+      #########################################################################
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      #########################################################################
+      # 2. Configure AWS credentials
+      #########################################################################
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      #########################################################################
+      # 3. Login to ECR
+      #########################################################################
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+
+      #########################################################################
+      # 4. Setup kubectl
+      #########################################################################
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.0
+
+      #########################################################################
+      # 5. Build and Push Docker Image
+      #########################################################################
+      - name: Build MCP server Docker image
+        working-directory: ./admin_mcp
+        run: | 
+          docker build -t mcp-server:latest .
+
+      - name: Tag and Push to ECR
+        run: |
+          docker tag mcp-server:latest ${{ env.ECR_REPOSITORY }}:latest
+          docker push ${{ env.ECR_REPOSITORY }}:latest
+      
+      #########################################################################
+      # 5.5. Install AWS CLI
+      #########################################################################
+      - name: Install AWS CLI
+        run: |
+          if ! command -v aws &> /dev/null; then
+            echo "Installing AWS CLI..."
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip -q awscliv2.zip
+            sudo ./aws/install
+          fi
+          aws --version
+
+      #########################################################################
+      # 6. Deploy to EKS
+      #########################################################################
+      - name: Deploy to EKS
+        working-directory: ./admin_mcp
+        run: |
+          aws eks update-kubeconfig --name ${{ secrets.KUBE_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+          kubectl apply -f deployment.yaml
