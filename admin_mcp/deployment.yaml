@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-server
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mcp-server
+  template:
+    metadata:
+      labels:
+        app: mcp-server
+    spec:
+      containers:
+      - name: mcp-server
+        image: 339713066436.dkr.ecr.us-east-1.amazonaws.com/mcp-server:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: BACKEND_API_URL
+          value: "https://backend.clairai.cloud"
+        - name: BEARER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mcp-server-secrets
+              key: bearer-token
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-server
+  namespace: default
+spec:
+  selector:
+    app: mcp-server
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: LoadBalancer
