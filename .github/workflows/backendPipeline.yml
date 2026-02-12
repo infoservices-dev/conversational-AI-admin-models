@@ -3,14 +3,12 @@ name: Deploy to Kubernetes
 on:
   push:
     branches:
-      #-   metrics-logs-alerts-genai # <-- your feature branch
       -   ai-assistant-integration
 
 env:
-  ACTIONS_STEP_DEBUG: true
   AWS_REGION: us-east-1
   KUBE_NAMESPACE: default  # or your namespace
-  ECR_REPOSITORY: 339713066436.dkr.ecr.us-east-1.amazonaws.com/mcp-server
+  ECR_REPOSITORY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/mcp-server
 jobs:
   deploy:
     runs-on: self-hosted
@@ -64,18 +62,6 @@ jobs:
           docker tag mcp-server:latest ${{ env.ECR_REPOSITORY }}:latest
           docker push ${{ env.ECR_REPOSITORY }}:latest
       
-      #########################################################################
-      # 5.5. Install AWS CLI
-      #########################################################################
-      - name: Install AWS CLI
-        run: |
-          if ! command -v aws &> /dev/null; then
-            echo "Installing AWS CLI..."
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip -q awscliv2.zip
-            sudo ./aws/install
-          fi
-          aws --version
 
       #########################################################################
       # 6. Deploy to EKS
